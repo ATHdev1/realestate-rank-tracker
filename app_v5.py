@@ -107,7 +107,7 @@ st.title(f"📊 {'내 매물' if listing_type == 'mine' else '경쟁사'} 순위
 
 if listing_type == "competitor":
     st.markdown(
-        "<h2 style='color: red;'>⚠️ 경쟁사 매물 추적모드 ON</h2>",
+        "<h2 style='color: red;'>⚠️ 경쟁사 매물 추적모드</h2>",
         unsafe_allow_html=True
     )
 
