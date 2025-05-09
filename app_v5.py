@@ -89,8 +89,8 @@ def find_article_rank(article_list, article_no):
 # ------------------------------
 st.set_page_config("매물 순위 대시보드", layout="wide")
 
-mode = st.radio("👁️ 모드 선택", ["내 매물 추적", "경쟁사 매물 추적"], horizontal=True)
-listing_type = "mine" if mode == "내 매물 추적" else "competitor"
+mode = st.radio("👁️ 모드 선택", ["내 매물 추적1", "내 매물 추적2"], horizontal=True)
+listing_type = "mine" if mode == "내 매물 추적1" else "competitor"
 
 custom_style = """
     <style>
@@ -103,13 +103,7 @@ custom_style = """
 """ % ("#fefefe" if listing_type == "mine" else "#fff5e5")
 st.markdown(custom_style, unsafe_allow_html=True)
 
-st.title(f"📊 {'내 매물' if listing_type == 'mine' else '경쟁사'} 순위 대시보드")
-
-if listing_type == "competitor":
-    st.markdown(
-        "<h2 style='color: red;'>⚠️ 경쟁사 매물 추적모드</h2>",
-        unsafe_allow_html=True
-    )
+st.title(f"📊 {'내 매물 1 ' if listing_type == 'mine' else '내 매물2 '} 순위 대시보드")
 
 my_articles = load_listings(listing_type)
 
