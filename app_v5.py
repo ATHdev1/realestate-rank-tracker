@@ -13,15 +13,16 @@ supabase = create_client(url, key)
 # ------------------------------
 # Supabase 연동 함수
 # ------------------------------
-def load_listings():
-    res = supabase.table("listings").select("*").order("created_at").execute()
+def load_listings(listing_type):
+    res = supabase.table("listings").select("*").eq("type", listing_type).order("created_at").execute()
     return res.data if res.data else []
 
-def add_listing(name, marker_id, article_no):
+def add_listing(name, marker_id, article_no, listing_type):
     supabase.table("listings").insert({
         "name": name,
         "marker_id": marker_id,
-        "article_no": article_no
+        "article_no": article_no,
+        "type": listing_type
     }).execute()
 
 def update_listing(id, name, marker_id, article_no):
@@ -86,10 +87,31 @@ def find_article_rank(article_list, article_no):
 # ------------------------------
 # Streamlit UI 시작
 # ------------------------------
-st.set_page_config("내 매물 순위 대시보드", layout="wide")
-st.title("📊 내 매물 순위 대시보드")
+st.set_page_config("매물 순위 대시보드", layout="wide")
 
-my_articles = load_listings()
+mode = st.radio("👁️ 모드 선택", ["내 매물 추적", "경쟁사 매물 추적"], horizontal=True)
+listing_type = "mine" if mode == "내 매물 추적" else "competitor"
+
+custom_style = """
+    <style>
+    h1 { font-size: 2.6rem; }
+    .rank-good { background-color: #d0f5e8; }
+    .rank-missing { color: #aaa; font-style: italic; }
+    .listing-table td { padding: 0.6rem 1rem; }
+    body { background-color: %s; }
+    </style>
+""" % ("#fefefe" if listing_type == "mine" else "#fff5e5")
+st.markdown(custom_style, unsafe_allow_html=True)
+
+st.title(f"📊 {'내 매물' if listing_type == 'mine' else '경쟁사'} 순위 대시보드")
+
+if listing_type == "competitor":
+    st.markdown(
+        "<h2 style='color: red;'>⚠️ 경쟁사 매물 추적모드 ON</h2>",
+        unsafe_allow_html=True
+    )
+
+my_articles = load_listings(listing_type)
 
 col_left, col_right = st.columns([3, 2])
 
@@ -102,7 +124,7 @@ with col_right:
         article = st.text_input("매물 ID")
         add_btn = st.form_submit_button("등록")
         if add_btn and name and marker and article:
-            add_listing(name, marker, article)
+            add_listing(name, marker, article, listing_type)
             st.success("✅ 등록 완료!")
             st.rerun()
 
@@ -110,7 +132,6 @@ with col_right:
 with col_left:
     st.subheader("📥 전체 순위 조회")
     if st.button("순위 불러오기"):
-
         cookies = {
     'NNB': 'HGQLO5MZU3SWK',
     'ASID': '3b0617410000018e7de810270000006a',
@@ -168,26 +189,14 @@ with col_left:
             })
 
         df = pd.DataFrame(results)
-
-        # 고급 필터 UI
-        with st.expander("🔍 고급 필터"):
-            name_filter = st.text_input("이름 검색")
-            marker_filter = st.text_input("마커 ID 필터")
-            df_filtered = df.copy()
-            if name_filter:
-                df_filtered = df_filtered[df_filtered["이름"].str.contains(name_filter, case=False)]
-            if marker_filter:
-                df_filtered = df_filtered[df_filtered["마커 ID"].str.contains(marker_filter, case=False)]
-
-        st.dataframe(df_filtered.drop(columns=["id"]), use_container_width=True, height=600)
+        st.dataframe(df.drop(columns=["id"]), use_container_width=True, height=600)
     else:
         st.info("👈 왼쪽에서 순위를 조회해보세요.")
 
 # 등록된 매물 일괄 수정/삭제
 st.markdown("---")
-st.subheader("🛠 등록된 매물 관리 (대량 편집 모드)")
+st.subheader("🛠 등록된 매물 관리")
 
-# 순위 없이 편집용 테이블 로드
 df_edit = pd.DataFrame(my_articles)
 if not df_edit.empty:
     df_edit["삭제"] = False
@@ -198,14 +207,12 @@ if not df_edit.empty:
         key="editable_table"
     )
 
-    # 일괄 수정
     if st.button("💾 수정 저장"):
         for row in df_edit_display.itertuples():
             update_listing(row.id, row.name, row.marker_id, row.article_no)
         st.success("✅ 모든 수정사항 저장 완료!")
         st.rerun()
 
-    # 선택 삭제
     if st.button("🗑 선택된 매물 삭제"):
         to_delete = df_edit_display[df_edit_display["삭제"] == True]
         for row in to_delete.itertuples():
