@@ -103,7 +103,7 @@ custom_style = """
 """ % ("#fefefe" if listing_type == "mine" else "#fff5e5")
 st.markdown(custom_style, unsafe_allow_html=True)
 
-st.title(f"📊 {'내 매물 1 ' if listing_type == 'mine' else '내 매물2 '} 순위 대시보드")
+st.title(f"📊 {'내 매물 1 ' if listing_type == 'mine' else '내 매물 2 '} 순위 대시보드")
 
 my_articles = load_listings(listing_type)
 
